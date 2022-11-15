@@ -1752,6 +1752,175 @@ exports.checkBypass = checkBypass;
 
 /***/ }),
 
+/***/ 1007:
+/***/ (function(__unused_webpack_module, exports) {
+
+
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.prettyPrint = void 0;
+var seen = [];
+/**
+ * Check if a value is an object or a function. Keep in mind that array, function, regexp, etc, are objects in JavaScript.
+ *
+ * @param value the value to check
+ * @return true if the value is an object or a function
+ */
+function isObj(value) {
+    var type = typeof value;
+    return value !== null && (type === 'object' || type === 'function');
+}
+/**
+ * Check if a value is a regular expression.
+ *
+ * @param value the value to check
+ * @return true if the value is a regular expression
+ */
+function isRegexp(value) {
+    return Object.prototype.toString.call(value) === '[object RegExp]';
+}
+/**
+ * Get an array of all of the enumerable symbols for an object.
+ *
+ * @param object the object to get the enumerable symbols for
+ */
+function getOwnEnumPropSymbols(object) {
+    return Object.getOwnPropertySymbols(object).filter(function (keySymbol) { return Object.prototype.propertyIsEnumerable.call(object, keySymbol); });
+}
+/**
+ * pretty print an object
+ *
+ * @param input the object to pretty print
+ * @param options the formatting options, transforms, and filters
+ * @param pad the padding string
+ */
+function prettyPrint(input, options, pad) {
+    if (pad === void 0) { pad = ''; }
+    // sensible option defaults
+    var defaultOptions = {
+        indent: '\t',
+        singleQuotes: true
+    };
+    var combinedOptions = __assign(__assign({}, defaultOptions), options);
+    var tokens;
+    if (combinedOptions.inlineCharacterLimit === undefined) {
+        tokens = {
+            newLine: '\n',
+            newLineOrSpace: '\n',
+            pad: pad,
+            indent: pad + combinedOptions.indent
+        };
+    }
+    else {
+        tokens = {
+            newLine: '@@__PRETTY_PRINT_NEW_LINE__@@',
+            newLineOrSpace: '@@__PRETTY_PRINT_NEW_LINE_OR_SPACE__@@',
+            pad: '@@__PRETTY_PRINT_PAD__@@',
+            indent: '@@__PRETTY_PRINT_INDENT__@@'
+        };
+    }
+    var expandWhiteSpace = function (string) {
+        if (combinedOptions.inlineCharacterLimit === undefined) {
+            return string;
+        }
+        var oneLined = string
+            .replace(new RegExp(tokens.newLine, 'g'), '')
+            .replace(new RegExp(tokens.newLineOrSpace, 'g'), ' ')
+            .replace(new RegExp(tokens.pad + '|' + tokens.indent, 'g'), '');
+        if (oneLined.length <= combinedOptions.inlineCharacterLimit) {
+            return oneLined;
+        }
+        return string
+            .replace(new RegExp(tokens.newLine + '|' + tokens.newLineOrSpace, 'g'), '\n')
+            .replace(new RegExp(tokens.pad, 'g'), pad)
+            .replace(new RegExp(tokens.indent, 'g'), pad + combinedOptions.indent);
+    };
+    if (seen.indexOf(input) !== -1) {
+        return '"[Circular]"';
+    }
+    if (input === null ||
+        input === undefined ||
+        typeof input === 'number' ||
+        typeof input === 'boolean' ||
+        typeof input === 'function' ||
+        typeof input === 'symbol' ||
+        isRegexp(input)) {
+        return String(input);
+    }
+    if (input instanceof Date) {
+        return "new Date('".concat(input.toISOString(), "')");
+    }
+    if (Array.isArray(input)) {
+        if (input.length === 0) {
+            return '[]';
+        }
+        seen.push(input);
+        var ret = '[' + tokens.newLine + input.map(function (el, i) {
+            var eol = input.length - 1 === i ? tokens.newLine : ',' + tokens.newLineOrSpace;
+            var value = prettyPrint(el, combinedOptions, pad + combinedOptions.indent);
+            if (combinedOptions.transform) {
+                value = combinedOptions.transform(input, i, value);
+            }
+            return tokens.indent + value + eol;
+        }).join('') + tokens.pad + ']';
+        seen.pop();
+        return expandWhiteSpace(ret);
+    }
+    if (isObj(input)) {
+        var objKeys_1 = __spreadArray(__spreadArray([], Object.keys(input), true), (getOwnEnumPropSymbols(input)), true);
+        if (combinedOptions.filter) {
+            objKeys_1 = objKeys_1.filter(function (el) { return combinedOptions.filter && combinedOptions.filter(input, el); });
+        }
+        if (objKeys_1.length === 0) {
+            return '{}';
+        }
+        seen.push(input);
+        var ret = '{' + tokens.newLine + objKeys_1.map(function (el, i) {
+            var eol = objKeys_1.length - 1 === i ? tokens.newLine : ',' + tokens.newLineOrSpace;
+            var isSymbol = typeof el === 'symbol';
+            var isClassic = !isSymbol && /^[a-z$_][a-z$_0-9]*$/i.test(el.toString());
+            var key = isSymbol || isClassic ? el : prettyPrint(el, combinedOptions);
+            var value = prettyPrint(input[el], combinedOptions, pad + combinedOptions.indent);
+            if (combinedOptions.transform) {
+                value = combinedOptions.transform(input, el, value);
+            }
+            return tokens.indent + String(key) + ': ' + value + eol;
+        }).join('') + tokens.pad + '}';
+        seen.pop();
+        return expandWhiteSpace(ret);
+    }
+    input = String(input).replace(/[\r\n]/g, function (x) { return x === '\n' ? '\\n' : '\\r'; });
+    if (!combinedOptions.singleQuotes) {
+        input = input.replace(/"/g, '\\"');
+        return "\"".concat(input, "\"");
+    }
+    input = input.replace(/\\?'/g, '\\\'');
+    return "'".concat(input, "'");
+}
+exports.prettyPrint = prettyPrint;
+
+
+/***/ }),
+
 /***/ 7760:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -7109,9 +7278,9 @@ class DeploymentCreateError extends Error {
 /***/ ((__webpack_module__, __unused_webpack___webpack_exports__, __nccwpck_require__) => {
 
 __nccwpck_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__) => {
-/* harmony import */ var util__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(3837);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(2186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
 /* harmony import */ var node_fetch__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(4429);
+/* harmony import */ var _base2_pretty_print_object__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(1007);
 /* harmony import */ var _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(2103);
 
 
@@ -7131,19 +7300,19 @@ function throwIfHasCpanelErrors(resultJson) {
 }
 
 function setSecrets() {
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.setSecret('deploy-user');
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.setSecret('deploy-key');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret('deploy-user');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret('deploy-key');
 }
 
 function objToString(obj) {
-    return (0,util__WEBPACK_IMPORTED_MODULE_0__.inspect)(obj, { showHidden: false, depth: null, colors: true });
+    return (0,_base2_pretty_print_object__WEBPACK_IMPORTED_MODULE_1__.prettyPrint)(obj);
 }
 
 async function makeCpanelVersionControlRequest(endpointUrl, params) {
-    const cpanelUrl = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('cpanel-url');
-    const deployUser = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('deploy-user');
-    const deployKey = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('deploy-key');
-    const repoRoot = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('cpanel-repository-root');
+    const cpanelUrl = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('cpanel-url');
+    const deployUser = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('deploy-user');
+    const deployKey = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('deploy-key');
+    const repoRoot = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('cpanel-repository-root');
 
     const authHeader = `cpanel ${{ deployUser }}:${{ deployKey }}"`;
     const requestParams = {
@@ -7152,9 +7321,9 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
     };
     const requestQuery = new URLSearchParams(requestParams);
     const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestQuery.toString()}`;
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
-    if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`With params: '${objToString(requestParams)}'`);
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
+    if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug()) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`With params: '${objToString(requestParams)}'`);
     }
 
     const headers = {
@@ -7162,23 +7331,23 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
         accept: 'application/json'
     };
 
-    if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`With headers: '${objToString(headers)}'`);
+    if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug()) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`With headers: '${objToString(headers)}'`);
     }
 
     const response = await (0,node_fetch__WEBPACK_IMPORTED_MODULE_3__/* ["default"] */ .ZP)(fetchUrl, {
         headers,
     });
 
-    if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Response: '${objToString(response)}'`);
+    if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug()) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Response: '${objToString(response)}'`);
     }
 
     throwIfHasResponseError(response);
 
     const { result } = await response.json();
-    if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Result: '${objToString(result)}'`);
+    if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug()) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Result: '${objToString(result)}'`);
     }
 
     throwIfHasCpanelErrors(result);
@@ -7187,7 +7356,7 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
 }
 
 async function updateCpanelBranchInfos() {
-    const branch = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('branch');
+    const branch = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('branch');
 
     const result = await makeCpanelVersionControlRequest('execute/VersionControl/update', {
         'branch': branch
@@ -7197,7 +7366,7 @@ async function updateCpanelBranchInfos() {
         throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentSetupError */ .$B('The input branch is not deployable. It\'s source tree is clean?');
     }
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Updated cPanel branch informations: ' + JSON.stringify(result, null, 2));
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Updated cPanel branch informations: ' + JSON.stringify(result, null, 2));
 }
 
 async function createDeployment() {
@@ -7208,24 +7377,24 @@ async function createDeployment() {
     }
 
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Created deployment with ID: ' + deploy_id);
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Created deployment with ID: ' + deploy_id);
     return deploy_id;
 }
 
 try {
     setSecrets();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup('Update cPanel branch information');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Update cPanel branch information');
     await updateCpanelBranchInfos();
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup('Creating cPanel deployment');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Creating cPanel deployment');
     const deploymentId = await createDeployment();
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.setOutput('deployment-id', deploymentId);
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('deployment-id', deploymentId);
 } catch (error) {
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed(error.message);
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);
 }
 
 __webpack_handle_async_dependencies__();
