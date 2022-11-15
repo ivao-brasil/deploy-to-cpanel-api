@@ -7126,7 +7126,7 @@ function throwIfHasResponseError(response) {
 
 function throwIfHasCpanelErrors(resultJson) {
     if (!resultJson.status) {
-        throw (0,_exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .CPanelError */ .XQ)(resultJson.errors);
+        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .CPanelError */ .XQ(resultJson.errors);
     }
 }
 
@@ -7175,7 +7175,7 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
 
     throwIfHasResponseError(response);
 
-    const { result } = await response.json();
+    const result = await response.json();
     if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
         _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Result: '${objToString(result)}'`);
     }
@@ -7192,7 +7192,7 @@ async function updateCpanelBranchInfos() {
         'branch': branch
     });
 
-    if (!result.deployable) {
+    if (!result.data.deployable) {
         throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentSetupError */ .$B('The input branch is not deployable. It\'s source tree is clean?');
     }
 
@@ -7200,12 +7200,11 @@ async function updateCpanelBranchInfos() {
 }
 
 async function createDeployment() {
-    const { deploy_id } = await makeCpanelVersionControlRequest('execute/VersionControlDeployment/create');
+    const { data: { deploy_id } } = await makeCpanelVersionControlRequest('execute/VersionControlDeployment/create');
 
     if (!deploy_id) {
         throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentCreateError */ .mK('The deployment has not been created in cPanel (empty deploy_id)');
     }
-
 
     _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Created deployment with ID: ' + deploy_id);
     return deploy_id;

@@ -60,7 +60,7 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
 
     throwIfHasResponseError(response);
 
-    const { result } = await response.json();
+    const result = await response.json();
     if (core.isDebug()) {
         core.info(`Result: '${objToString(result)}'`);
     }
@@ -77,7 +77,7 @@ async function updateCpanelBranchInfos() {
         'branch': branch
     });
 
-    if (!result.deployable) {
+    if (!result.data.deployable) {
         throw new DeploymentSetupError('The input branch is not deployable. It\'s source tree is clean?');
     }
 
@@ -85,12 +85,11 @@ async function updateCpanelBranchInfos() {
 }
 
 async function createDeployment() {
-    const { deploy_id } = await makeCpanelVersionControlRequest('execute/VersionControlDeployment/create');
+    const { data: { deploy_id } } = await makeCpanelVersionControlRequest('execute/VersionControlDeployment/create');
 
     if (!deploy_id) {
         throw new DeploymentCreateError('The deployment has not been created in cPanel (empty deploy_id)');
     }
-
 
     core.info('Created deployment with ID: ' + deploy_id);
     return deploy_id;
