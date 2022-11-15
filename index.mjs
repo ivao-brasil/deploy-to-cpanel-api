@@ -1,7 +1,7 @@
 import core from '@actions/core';
 import { makeCpanelVersionControlRequest, makeEventSourceRequest } from './requests.mjs';
 import { DeploymentError } from './exceptions.mjs';
-import { objToString } from './utils.mjs';
+import { objToString, sleep } from './utils.mjs';
 
 function setSecrets() {
     core.setSecret('deploy-user');
@@ -33,31 +33,31 @@ async function createDeployment() {
     return data;
 }
 
-async function watchDeploymentLog({ sse_url }) {
-    // Remove trailling slash
-    const event = makeEventSourceRequest(sse_url.substring(1));
+async function waitDeploymentCompletion(deploy_id, timeoutSeconds) {
+    const POOLING_RATE_MS = 5000; // 5 sec
+    let remaningTime = timeoutSeconds;
 
-    event.addEventListener('task_processing', ({ data }) => {
-        core.info('The deployment task is processing in cPanel...');
-        if (core.isDebug()) {
-            core.info(`Event data: ${objToString(data)}`);
-        }
-    });
+    while (remaningTime > 0) {
+        remaningTime -= POOLING_RATE_MS;
 
-    event.addEventListener('task_complete', ({ data }) => {
-        core.info('cPanel deploy is complete...');
-        if (core.isDebug()) {
-            core.info(`Event data: ${objToString(data)}`);
-        }
-    });
-
-    event.addEventListener('task_failed', ({ data }) => {
-        if (core.isDebug()) {
-            core.info(`Event data: ${objToString(data)}`);
+        const { data } = await makeCpanelVersionControlRequest('execute/VersionControlDeployment/retrieve');
+        const lastDeployment = data.find((item) => item.deploy_id === deploy_id);
+        if (!lastDeployment) {
+            return;
         }
 
-        throw new DeploymentError('cPanel deploy has failed! Check its logs to see what happened.');
-    });
+        if (lastDeployment.timestamps.failed) {
+            throw new DeploymentError(`The deployment has failed! Check the log file at ${lastDeployment.log_path}`);
+        }
+
+        if (lastDeployment.timestamps.succeeded) {
+            return;
+        }
+
+        await sleep(POOLING_RATE_MS);
+    };
+
+    throw new DeploymentError(`The cPanel doesn't returned any data after ${timeoutSeconds} seconds`);
 }
 
 try {
@@ -68,11 +68,11 @@ try {
     core.endGroup();
 
     core.startGroup('Creating cPanel deployment');
-    const { deploymentId, ...deployData } = await createDeployment();
+    const { deploymentId } = await createDeployment();
     core.endGroup();
 
     core.startGroup('Waiting cPanel deployment finish');
-    await watchDeploymentLog(deployData);
+    await waitDeploymentCompletion(deploymentId, core.getInput('timeout'));
     core.endGroup();
 
     core.setOutput('deployment-id', deploymentId);

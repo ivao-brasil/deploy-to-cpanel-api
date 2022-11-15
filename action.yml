@@ -16,6 +16,9 @@ inputs:
   branch:
     description: 'The branch that will be synced'
     required: true
+  timeout_ms:
+    description: 'Timeout while waiting for deploy to complete'
+    default: 180000 # 3 min
 outputs:
   deployment-id:
     description: 'cPanel generated deployment ID'

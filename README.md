@@ -11,6 +11,7 @@ This action uses the [cPanel API](https://api.docs.cpanel.net/cpanel/introductio
 | deploy-key             |     ✔️    | cPanel deploy key              |
 | cpanel-repository-root |     ✔️    | cPanel git repository root     |
 | branch                 |     ✔️    | The branch that will be synced |
+| timeout_ms             |           | Timeout in ms to wait the deploy status |
 
 ## Outputs
 
@@ -27,5 +28,5 @@ with:
     deploy-user: ${{ secrets.DEPLOY_USER }}
     deploy-key: ${{ secrets.DEPLOY_KEY }}
     cpanel-repository-root: /home/user/deploy
-    branch: ${GITHUB_REF##*/}
+    branch: main
 ```

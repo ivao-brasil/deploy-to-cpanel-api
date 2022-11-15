@@ -68,17 +68,3 @@ export async function makeCpanelVersionControlRequest(endpointUrl, params) {
 
     return result;
 }
-
-export function makeEventSourceRequest(endpointUrl) {
-    const cpanelUrl = core.getInput('cpanel-url');
-    const eventUrl = `${cpanelUrl}/${endpointUrl}`;
-    core.info(`Watching SSE events at: ${eventUrl}`);
-
-    const event = new EventSource(eventUrl);
-
-    event.onerror = (err) => {
-        throw new Error(`Unknown error while connecting at SSE server: ${objToString(err)}`);
-    };
-
-    return event;
-}
