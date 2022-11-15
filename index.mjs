@@ -1,15 +1,11 @@
-import { inspect } from 'util';
 import core from '@actions/core';
 import { makeCpanelVersionControlRequest, makeEventSourceRequest } from './requests.mjs';
 import { DeploymentError } from './exceptions.mjs';
+import { objToString } from './utils.mjs';
 
 function setSecrets() {
     core.setSecret('deploy-user');
     core.setSecret('deploy-key');
-}
-
-function objToString(obj) {
-    return inspect(obj, { showHidden: false, depth: null, colors: true });
 }
 
 async function updateCpanelBranchInfos() {
@@ -38,8 +34,8 @@ async function createDeployment() {
 }
 
 async function watchDeploymentLog({ sse_url }) {
-    const event = makeEventSourceRequest(sse_url);
-    core.info(`Watching deployment sse in: ${eventUrl}`);
+    // Remove trailling slash
+    const event = makeEventSourceRequest(sse_url.substring(1));
 
     event.addEventListener('task_processing', ({ data }) => {
         core.info('The deployment task is processing in cPanel...');

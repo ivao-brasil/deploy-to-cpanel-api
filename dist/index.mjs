@@ -7584,6 +7584,9 @@ try {
 /* harmony export */   "XQ": () => (/* binding */ CPanelError),
 /* harmony export */   "Jw": () => (/* binding */ DeploymentError)
 /* harmony export */ });
+/* harmony import */ var _utils_mjs__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(66);
+
+
 class HTTPResponseError extends Error {
 	constructor(response) {
 		super(`HTTP Error Response: ${response.status} ${response.statusText}`);
@@ -7593,7 +7596,7 @@ class HTTPResponseError extends Error {
 
 class CPanelError extends Error {
 	constructor(errorList) {
-		super(`Error while triggering the deploy in cPanel: ${errorList.toString()}`);
+		super(`Error while triggering the deploy in cPanel: ${(0,_utils_mjs__WEBPACK_IMPORTED_MODULE_0__/* .objToString */ .M)(errorList)}`);
 	}
 }
 
@@ -7611,94 +7614,90 @@ class DeploymentError extends Error {
 /***/ ((__webpack_module__, __unused_webpack___webpack_exports__, __nccwpck_require__) => {
 
 __nccwpck_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__) => {
-/* harmony import */ var util__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(3837);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(2186);
-/* harmony import */ var _requests_mjs__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(4191);
-/* harmony import */ var _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(2103);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
+/* harmony import */ var _requests_mjs__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(4191);
+/* harmony import */ var _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(2103);
+/* harmony import */ var _utils_mjs__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(66);
 
 
 
 
 
 function setSecrets() {
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.setSecret('deploy-user');
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.setSecret('deploy-key');
-}
-
-function objToString(obj) {
-    return (0,util__WEBPACK_IMPORTED_MODULE_0__.inspect)(obj, { showHidden: false, depth: null, colors: true });
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret('deploy-user');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret('deploy-key');
 }
 
 async function updateCpanelBranchInfos() {
-    const branch = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('branch');
+    const branch = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('branch');
 
-    const result = await (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_2__/* .makeCpanelVersionControlRequest */ .l)('execute/VersionControl/update', {
+    const result = await (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_1__/* .makeCpanelVersionControlRequest */ .l)('execute/VersionControl/update', {
         'branch': branch
     });
 
     if (!result.data.deployable) {
-        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__/* .DeploymentError */ .Jw('The input branch is not deployable. It\'s source tree is clean?');
+        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentError */ .Jw('The input branch is not deployable. It\'s source tree is clean?');
     }
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Updated cPanel branch informations: ' + objToString(result));
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Updated cPanel branch informations: ' + (0,_utils_mjs__WEBPACK_IMPORTED_MODULE_3__/* .objToString */ .M)(result));
 }
 
 async function createDeployment() {
-    const { data } = await (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_2__/* .makeCpanelVersionControlRequest */ .l)('execute/VersionControlDeployment/create');
+    const { data } = await (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_1__/* .makeCpanelVersionControlRequest */ .l)('execute/VersionControlDeployment/create');
 
     if (!data.deploy_id) {
-        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__/* .DeploymentError */ .Jw('The deployment has not been created in cPanel (empty deploy_id)');
+        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentError */ .Jw('The deployment has not been created in cPanel (empty deploy_id)');
     }
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Created deployment with data: ' + objToString(data));
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Created deployment with data: ' + (0,_utils_mjs__WEBPACK_IMPORTED_MODULE_3__/* .objToString */ .M)(data));
     return data;
 }
 
 async function watchDeploymentLog({ sse_url }) {
-    const event = (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_2__/* .makeEventSourceRequest */ .t)(sse_url);
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Watching deployment sse in: ${eventUrl}`);
+    // Remove trailling slash
+    const event = (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_1__/* .makeEventSourceRequest */ .t)(sse_url.substring(1));
 
     event.addEventListener('task_processing', ({ data }) => {
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('The deployment task is processing in cPanel...');
-        if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Event data: ${objToString(data)}`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('The deployment task is processing in cPanel...');
+        if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug()) {
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Event data: ${(0,_utils_mjs__WEBPACK_IMPORTED_MODULE_3__/* .objToString */ .M)(data)}`);
         }
     });
 
     event.addEventListener('task_complete', ({ data }) => {
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('cPanel deploy is complete...');
-        if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Event data: ${objToString(data)}`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('cPanel deploy is complete...');
+        if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug()) {
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Event data: ${(0,_utils_mjs__WEBPACK_IMPORTED_MODULE_3__/* .objToString */ .M)(data)}`);
         }
     });
 
     event.addEventListener('task_failed', ({ data }) => {
-        if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Event data: ${objToString(data)}`);
+        if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug()) {
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Event data: ${(0,_utils_mjs__WEBPACK_IMPORTED_MODULE_3__/* .objToString */ .M)(data)}`);
         }
 
-        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__/* .DeploymentError */ .Jw('cPanel deploy has failed! Check its logs to see what happened.');
+        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentError */ .Jw('cPanel deploy has failed! Check its logs to see what happened.');
     });
 }
 
 try {
     setSecrets();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup('Update cPanel branch information');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Update cPanel branch information');
     await updateCpanelBranchInfos();
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup('Creating cPanel deployment');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Creating cPanel deployment');
     const { deploymentId, ...deployData } = await createDeployment();
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup('Waiting cPanel deployment finish');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Waiting cPanel deployment finish');
     await watchDeploymentLog(deployData);
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.setOutput('deployment-id', deploymentId);
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('deployment-id', deploymentId);
 } catch (error) {
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed(error.message);
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);
 }
 
 __webpack_handle_async_dependencies__();
@@ -8219,6 +8218,8 @@ __nccwpck_require__.d(__webpack_exports__, {
   "t": () => (/* binding */ makeEventSourceRequest)
 });
 
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
 ;// CONCATENATED MODULE: external "node:http"
 const external_node_http_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:http");
 ;// CONCATENATED MODULE: external "node:https"
@@ -10372,7 +10373,11 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 var eventsource = __nccwpck_require__(8883);
 // EXTERNAL MODULE: ./exceptions.mjs
 var exceptions = __nccwpck_require__(2103);
+// EXTERNAL MODULE: ./utils.mjs
+var utils = __nccwpck_require__(66);
 ;// CONCATENATED MODULE: ./requests.mjs
+
+
 
 
 
@@ -10393,6 +10398,10 @@ function getAuthenticationHeader() {
     const deployUser = core.getInput('deploy-user');
     const deployKey = core.getInput('deploy-key');
     const authHeader = `cpanel ${deployUser}:${deployKey}`;
+    if (core.isDebug()) {
+        core.info('Generated auth header: ' + authHeader);
+    }
+
     return authHeader;
 }
 
@@ -10406,22 +10415,20 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
     });
 
     const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestQuery.toString()}`;
-    const authHeader = getAuthenticationHeader();
     core.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
 
     if (core.isDebug()) {
         core.info('Repository root: ' + repoRoot);
-        core.info('Additional params: ' + objToString(params));
-        core.info('Auth string: ' + authHeader);
+        core.info('Additional params: ' + (0,utils/* objToString */.M)(params));
     }
 
     const headers = {
-        'Authorization': authHeader,
+        'Authorization': getAuthenticationHeader(),
         accept: 'application/json'
     };
 
     if (core.isDebug()) {
-        core.info(`With headers: '${objToString(headers)}'`);
+        core.info(`With headers: '${(0,utils/* objToString */.M)(headers)}'`);
     }
 
     const response = await fetch(fetchUrl, {
@@ -10432,7 +10439,7 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
 
     const result = await response.json();
     if (core.isDebug()) {
-        core.info(`Result: '${objToString(result)}'`);
+        core.info(`Result: '${(0,utils/* objToString */.M)(result)}'`);
     }
 
     throwIfHasCpanelErrors(result);
@@ -10443,21 +10450,34 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
 function makeEventSourceRequest(endpointUrl) {
     const cpanelUrl = core.getInput('cpanel-url');
     const eventUrl = `${cpanelUrl}/${endpointUrl}`;
-    const authHeader = getAuthenticationHeader();
+    core.info(`Watching SSE events at: ${eventUrl}`);
 
     const event = new eventsource(eventUrl, {
-        rejectUnauthorized: true,
-        withCredentials: true,
-        headers: { 'Authorization': authHeader }
+        withCredentials: true
     });
 
-    evtSource.onerror = (err) => {
-        throw new err;
+    event.onerror = (err) => {
+        throw new Error(`Unknown error while connecting at SSE server: ${(0,utils/* objToString */.M)(err)}`);
     };
 
     return event;
 }
 
+
+/***/ }),
+
+/***/ 66:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "M": () => (/* binding */ objToString)
+/* harmony export */ });
+/* harmony import */ var util__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(3837);
+
+
+function objToString(obj) {
+    return (0,util__WEBPACK_IMPORTED_MODULE_0__.inspect)(obj, { showHidden: false, depth: null, colors: true });
+}
 
 /***/ })
 

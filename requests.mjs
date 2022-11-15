@@ -1,6 +1,8 @@
+import core from '@actions/core';
 import fetch from 'node-fetch';
 import EventSource from 'eventsource';
 import { CPanelError, HTTPResponseError } from './exceptions.mjs';
+import { objToString } from './utils.mjs';
 
 function throwIfHasResponseError(response) {
     if (!response.ok) {
@@ -18,6 +20,10 @@ function getAuthenticationHeader() {
     const deployUser = core.getInput('deploy-user');
     const deployKey = core.getInput('deploy-key');
     const authHeader = `cpanel ${deployUser}:${deployKey}`;
+    if (core.isDebug()) {
+        core.info('Generated auth header: ' + authHeader);
+    }
+
     return authHeader;
 }
 
@@ -31,17 +37,15 @@ export async function makeCpanelVersionControlRequest(endpointUrl, params) {
     });
 
     const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestQuery.toString()}`;
-    const authHeader = getAuthenticationHeader();
     core.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
 
     if (core.isDebug()) {
         core.info('Repository root: ' + repoRoot);
         core.info('Additional params: ' + objToString(params));
-        core.info('Auth string: ' + authHeader);
     }
 
     const headers = {
-        'Authorization': authHeader,
+        'Authorization': getAuthenticationHeader(),
         accept: 'application/json'
     };
 
@@ -68,16 +72,14 @@ export async function makeCpanelVersionControlRequest(endpointUrl, params) {
 export function makeEventSourceRequest(endpointUrl) {
     const cpanelUrl = core.getInput('cpanel-url');
     const eventUrl = `${cpanelUrl}/${endpointUrl}`;
-    const authHeader = getAuthenticationHeader();
+    core.info(`Watching SSE events at: ${eventUrl}`);
 
     const event = new EventSource(eventUrl, {
-        rejectUnauthorized: true,
-        withCredentials: true,
-        headers: { 'Authorization': authHeader }
+        withCredentials: true
     });
 
-    evtSource.onerror = (err) => {
-        throw new err;
+    event.onerror = (err) => {
+        throw new Error(`Unknown error while connecting at SSE server: ${objToString(err)}`);
     };
 
     return event;

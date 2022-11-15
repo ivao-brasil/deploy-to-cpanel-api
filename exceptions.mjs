@@ -1,3 +1,5 @@
+import { objToString } from "./utils.mjs";
+
 export class HTTPResponseError extends Error {
 	constructor(response) {
 		super(`HTTP Error Response: ${response.status} ${response.statusText}`);
@@ -7,7 +9,7 @@ export class HTTPResponseError extends Error {
 
 export class CPanelError extends Error {
 	constructor(errorList) {
-		super(`Error while triggering the deploy in cPanel: ${errorList.toString()}`);
+		super(`Error while triggering the deploy in cPanel: ${objToString(errorList)}`);
 	}
 }
 
