@@ -7145,7 +7145,7 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
     const deployKey = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('deploy-key');
     const repoRoot = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('cpanel-repository-root');
 
-    const authHeader = `cpanel ${deployUser}:${deployKey}"`;
+    const authHeader = `cpanel ${deployUser}:${deployKey}`;
     const requestQuery = new URLSearchParams({
         'repository_root': repoRoot,
         ...params
