@@ -71,7 +71,7 @@ export async function makeCpanelVersionControlRequest(endpointUrl, params) {
 
 export function makeEventSourceRequest(endpointUrl) {
     const cpanelUrl = core.getInput('cpanel-url');
-    const eventUrl = `${cpanelUrl}/${endpointUrl}`;
+    const eventUrl = `${cpanelUrl.replace(/https?:/, '')}/${endpointUrl}`;
     core.info(`Watching SSE events at: ${eventUrl}`);
 
     const event = new EventSource(eventUrl, {
