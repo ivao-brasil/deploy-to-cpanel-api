@@ -1,0 +1,24 @@
+name: 'Deploy to cPanel API'
+description: 'Trigger a git sync using the cPanel API'
+inputs:
+  cpanel-url:
+    description: 'cPanel access URL'
+    required: true
+  deploy-user:
+    description: 'cPanel deploy user'
+    required: true
+  deploy-key:
+    description: 'cPanel deploy key'
+    required: true
+  cpanel-repository-root:
+    description: 'cPanel git repository root'
+    required: true
+  branch:
+    description: 'The branch that will be synced'
+    required: true
+outputs:
+  deployment-id:
+    description: 'cPanel generated deployment ID'
+runs:
+  using: 'node16'
+  main: 'index.mjs'
