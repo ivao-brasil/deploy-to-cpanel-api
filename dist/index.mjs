@@ -7145,16 +7145,18 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
     const deployKey = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('deploy-key');
     const repoRoot = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('cpanel-repository-root');
 
-    const authHeader = `cpanel ${{ deployUser }}:${{ deployKey }}"`;
-    const requestParams = {
+    const authHeader = `cpanel ${deployUser}:${deployKey}"`;
+    const requestQuery = new URLSearchParams({
         'repository_root': repoRoot,
         ...params
-    };
-    const requestQuery = new URLSearchParams(requestParams);
+    });
+
     const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestQuery.toString()}`;
     _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
+
     if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`With params: '${objToString(requestParams)}'`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Repository root: ' + repoRoot);
+        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Auth string: ' + authHeader);
     }
 
     const headers = {

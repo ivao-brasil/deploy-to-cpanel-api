@@ -30,16 +30,18 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
     const deployKey = core.getInput('deploy-key');
     const repoRoot = core.getInput('cpanel-repository-root');
 
-    const authHeader = `cpanel ${{ deployUser }}:${{ deployKey }}"`;
-    const requestParams = {
+    const authHeader = `cpanel ${deployUser}:${deployKey}"`;
+    const requestQuery = new URLSearchParams({
         'repository_root': repoRoot,
         ...params
-    };
-    const requestQuery = new URLSearchParams(requestParams);
+    });
+
     const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestQuery.toString()}`;
     core.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
+
     if (core.isDebug()) {
-        core.info(`With params: '${objToString(requestParams)}'`);
+        core.info('Repository root: ' + repoRoot);
+        core.info('Auth string: ' + authHeader);
     }
 
     const headers = {
