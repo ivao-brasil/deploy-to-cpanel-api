@@ -97,7 +97,11 @@ async function createDeployment() {
 }
 
 async function watchDeploymentLog({ sse_url }) {
-    const event = new EventSource(sse_url);
+    const cpanelUrl = core.getInput('cpanel-url');
+    const eventUrl = `${cpanelUrl}/${sse_url}`;
+    const event = new EventSource(eventUrl, { rejectUnauthorized: true });
+    core.info(`Watching deployment sse in: ${eventUrl}`);
+
     event.addEventListener('task_processing', ({ data }) => {
         core.info('The deployment task is processing in cPanel...');
         if (core.isDebug()) {

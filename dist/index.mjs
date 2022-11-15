@@ -7715,7 +7715,11 @@ async function createDeployment() {
 }
 
 async function watchDeploymentLog({ sse_url }) {
-    const event = new eventsource__WEBPACK_IMPORTED_MODULE_3__(sse_url);
+    const cpanelUrl = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('cpanel-url');
+    const eventUrl = `${cpanelUrl}/${sse_url}`;
+    const event = new eventsource__WEBPACK_IMPORTED_MODULE_3__(eventUrl, { rejectUnauthorized: true });
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Watching deployment sse in: ${eventUrl}`);
+
     event.addEventListener('task_processing', ({ data }) => {
         _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('The deployment task is processing in cPanel...');
         if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
