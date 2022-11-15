@@ -7195,7 +7195,7 @@ async function updateCpanelBranchInfos() {
         throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentSetupError */ .$B('The input branch is not deployable. It\'s source tree is clean?');
     }
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Updated cPanel branch informations: ' + JSON.stringify(result, null, 2));
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Updated cPanel branch informations: ' + objToString(result));
 }
 
 async function createDeployment() {

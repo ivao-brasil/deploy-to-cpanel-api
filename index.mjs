@@ -80,7 +80,7 @@ async function updateCpanelBranchInfos() {
         throw new DeploymentSetupError('The input branch is not deployable. It\'s source tree is clean?');
     }
 
-    core.info('Updated cPanel branch informations: ' + JSON.stringify(result, null, 2));
+    core.info('Updated cPanel branch informations: ' + objToString(result));
 }
 
 async function createDeployment() {
