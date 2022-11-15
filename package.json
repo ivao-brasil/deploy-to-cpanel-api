@@ -12,7 +12,6 @@
   "license": "ISC",
   "dependencies": {
     "@actions/core": "^1.10.0",
-    "@base2/pretty-print-object": "^1.0.2",
     "node-fetch": "^3.3.0"
   },
   "devDependencies": {

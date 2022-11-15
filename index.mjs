@@ -1,6 +1,6 @@
+import { inspect } from 'util';
 import core from '@actions/core';
 import fetch from 'node-fetch';
-import { prettyPrint } from '@base2/pretty-print-object';
 import { CPanelError, DeploymentSetupError, HTTPResponseError, DeploymentCreateError } from './exceptions.mjs';
 
 function throwIfHasResponseError(response) {
@@ -21,7 +21,7 @@ function setSecrets() {
 }
 
 function objToString(obj) {
-    return prettyPrint(obj);
+    return inspect(obj, { showHidden: false, depth: null, colors: true });
 }
 
 async function makeCpanelVersionControlRequest(endpointUrl, params) {
