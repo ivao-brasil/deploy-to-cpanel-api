@@ -7133,23 +7133,23 @@ function setSecrets() {
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret('deploy-key');
 }
 
-async function makeCpanelVersionControlRequest(endpointUrl, body) {
+async function makeCpanelVersionControlRequest(endpointUrl, params) {
     const cpanelUrl = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('cpanel-url');
     const deployUser = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('deploy-user');
     const deployKey = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('deploy-key');
     const repoRoot = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('cpanel-repository-root');
 
-    const fetchUrl = `${cpanelUrl}/${endpointUrl}`;
     const authHeader = `cpanel ${{ deployUser }}:${{ deployKey }}"`;
+    const requestParams = new URLSearchParams({
+        'repository_root': repoRoot,
+        ...params
+    });
+    const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestParams.toString()}`;
     const response = await (0,node_fetch__WEBPACK_IMPORTED_MODULE_2__/* ["default"] */ .ZP)(fetchUrl, {
         headers: {
             'Authorization': authHeader,
             accept: 'application/json'
         },
-        body: {
-            'repository_root': repoRoot,
-            ...body
-        }
     });
 
     throwIfHasResponseError(response);

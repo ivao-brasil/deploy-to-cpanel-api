@@ -19,23 +19,23 @@ function setSecrets() {
     core.setSecret('deploy-key');
 }
 
-async function makeCpanelVersionControlRequest(endpointUrl, body) {
+async function makeCpanelVersionControlRequest(endpointUrl, params) {
     const cpanelUrl = core.getInput('cpanel-url');
     const deployUser = core.getInput('deploy-user');
     const deployKey = core.getInput('deploy-key');
     const repoRoot = core.getInput('cpanel-repository-root');
 
-    const fetchUrl = `${cpanelUrl}/${endpointUrl}`;
     const authHeader = `cpanel ${{ deployUser }}:${{ deployKey }}"`;
+    const requestParams = new URLSearchParams({
+        'repository_root': repoRoot,
+        ...params
+    });
+    const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestParams.toString()}`;
     const response = await fetch(fetchUrl, {
         headers: {
             'Authorization': authHeader,
             accept: 'application/json'
         },
-        body: {
-            'repository_root': repoRoot,
-            ...body
-        }
     });
 
     throwIfHasResponseError(response);
