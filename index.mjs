@@ -55,10 +55,6 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
         headers,
     });
 
-    if (core.isDebug()) {
-        core.info(`Response: '${objToString(response)}'`);
-    }
-
     throwIfHasResponseError(response);
 
     const { result } = await response.json();

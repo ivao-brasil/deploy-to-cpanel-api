@@ -7339,10 +7339,6 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
         headers,
     });
 
-    if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug()) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Response: '${objToString(response)}'`);
-    }
-
     throwIfHasResponseError(response);
 
     const { result } = await response.json();
