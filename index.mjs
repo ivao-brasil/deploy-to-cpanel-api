@@ -1,7 +1,8 @@
 import { inspect } from 'util';
 import core from '@actions/core';
 import fetch from 'node-fetch';
-import { CPanelError, DeploymentSetupError, HTTPResponseError, DeploymentCreateError } from './exceptions.mjs';
+import { CPanelError, DeploymentError, HTTPResponseError } from './exceptions.mjs';
+import EventSource from 'eventsource';
 
 function throwIfHasResponseError(response) {
     if (!response.ok) {
@@ -11,7 +12,7 @@ function throwIfHasResponseError(response) {
 
 function throwIfHasCpanelErrors(resultJson) {
     if (!resultJson.status) {
-        throw CPanelError(resultJson.errors);
+        throw new CPanelError(resultJson.errors);
     }
 }
 
@@ -78,21 +79,46 @@ async function updateCpanelBranchInfos() {
     });
 
     if (!result.data.deployable) {
-        throw new DeploymentSetupError('The input branch is not deployable. It\'s source tree is clean?');
+        throw new DeploymentError('The input branch is not deployable. It\'s source tree is clean?');
     }
 
     core.info('Updated cPanel branch informations: ' + objToString(result));
 }
 
 async function createDeployment() {
-    const { data: { deploy_id } } = await makeCpanelVersionControlRequest('execute/VersionControlDeployment/create');
+    const { data } = await makeCpanelVersionControlRequest('execute/VersionControlDeployment/create');
 
-    if (!deploy_id) {
-        throw new DeploymentCreateError('The deployment has not been created in cPanel (empty deploy_id)');
+    if (!data.deploy_id) {
+        throw new DeploymentError('The deployment has not been created in cPanel (empty deploy_id)');
     }
 
-    core.info('Created deployment with ID: ' + deploy_id);
-    return deploy_id;
+    core.info('Created deployment with data: ' + objToString(data));
+    return data;
+}
+
+async function watchDeploymentLog({ sse_url }) {
+    const event = new EventSource(sse_url);
+    event.addEventListener('task_processing', ({ data }) => {
+        core.info('The deployment task is processing in cPanel...');
+        if (core.isDebug()) {
+            core.info(`Event data: ${objToString(data)}`);
+        }
+    });
+
+    event.addEventListener('task_complete', ({ data }) => {
+        core.info('cPanel deploy is complete...');
+        if (core.isDebug()) {
+            core.info(`Event data: ${objToString(data)}`);
+        }
+    });
+
+    event.addEventListener('task_failed', ({ data }) => {
+        if (core.isDebug()) {
+            core.info(`Event data: ${objToString(data)}`);
+        }
+
+        throw new DeploymentError('cPanel deploy has failed! Check its logs to see what happened.');
+    });
 }
 
 try {
@@ -103,7 +129,11 @@ try {
     core.endGroup();
 
     core.startGroup('Creating cPanel deployment');
-    const deploymentId = await createDeployment();
+    const { deploymentId, ...deployData } = await createDeployment();
+    core.endGroup();
+
+    core.startGroup('Waiting cPanel deployment finish');
+    await watchDeploymentLog(deployData);
     core.endGroup();
 
     core.setOutput('deployment-id', deploymentId);

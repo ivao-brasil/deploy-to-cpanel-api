@@ -11,13 +11,7 @@ export class CPanelError extends Error {
 	}
 }
 
-export class DeploymentSetupError extends Error {
-	constructor(error) {
-		super(error);
-	}
-}
-
-export class DeploymentCreateError extends Error {
+export class DeploymentError extends Error {
 	constructor(error) {
 		super(error);
 	}
