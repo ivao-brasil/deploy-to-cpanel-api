@@ -10449,12 +10449,10 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
 
 function makeEventSourceRequest(endpointUrl) {
     const cpanelUrl = core.getInput('cpanel-url');
-    const eventUrl = `${cpanelUrl.replace(/https?:/, '')}/${endpointUrl}`;
+    const eventUrl = `${cpanelUrl}/${endpointUrl}`;
     core.info(`Watching SSE events at: ${eventUrl}`);
 
-    const event = new eventsource(eventUrl, {
-        withCredentials: true
-    });
+    const event = new eventsource(eventUrl);
 
     event.onerror = (err) => {
         throw new Error(`Unknown error while connecting at SSE server: ${(0,utils/* objToString */.M)(err)}`);
