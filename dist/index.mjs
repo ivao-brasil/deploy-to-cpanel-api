@@ -7156,7 +7156,7 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
 
     if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
         _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Repository root: ' + repoRoot);
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Additional params: ' + params);
+        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Additional params: ' + objToString(params));
         _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Auth string: ' + authHeader);
     }
 

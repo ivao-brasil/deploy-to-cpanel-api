@@ -41,7 +41,7 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
 
     if (core.isDebug()) {
         core.info('Repository root: ' + repoRoot);
-        core.info('Additional params: ' + params);
+        core.info('Additional params: ' + objToString(params));
         core.info('Auth string: ' + authHeader);
     }
 
