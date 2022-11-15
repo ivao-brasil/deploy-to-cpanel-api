@@ -1,3 +1,4 @@
+import { inspect } from 'util';
 import core from '@actions/core';
 import fetch from 'node-fetch';
 import { CPanelError, DeploymentSetupError, HTTPResponseError, DeploymentCreateError } from './exceptions.mjs';
@@ -19,6 +20,10 @@ function setSecrets() {
     core.setSecret('deploy-key');
 }
 
+function objToString(obj) {
+    return inspect(obj, { showHidden: false, depth: null, colors: true });
+}
+
 async function makeCpanelVersionControlRequest(endpointUrl, params) {
     const cpanelUrl = core.getInput('cpanel-url');
     const deployUser = core.getInput('deploy-user');
@@ -26,33 +31,39 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
     const repoRoot = core.getInput('cpanel-repository-root');
 
     const authHeader = `cpanel ${{ deployUser }}:${{ deployKey }}"`;
-    const requestParams = new URLSearchParams({
+    const requestParams = {
         'repository_root': repoRoot,
         ...params
-    });
-    const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestParams.toString()}`;
-
+    };
+    const requestQuery = new URLSearchParams(requestParams);
+    const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestQuery.toString()}`;
     core.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
     if (core.isDebug()) {
-        core.info(`With query string: '${requestParams.toString()}'`);
+        core.info(`With params: '${objToString(requestParams)}'`);
+    }
+
+    const headers = {
+        'Authorization': authHeader,
+        accept: 'application/json'
+    };
+
+    if (core.isDebug()) {
+        core.info(`With headers: '${objToString(headers)}'`);
     }
 
     const response = await fetch(fetchUrl, {
-        headers: {
-            'Authorization': authHeader,
-            accept: 'application/json'
-        },
+        headers,
     });
 
     if (core.isDebug()) {
-        core.info(`Response: '${JSON.stringify(response, null, 2)}'`);
+        core.info(`Response: '${objToString(response)}'`);
     }
 
     throwIfHasResponseError(response);
 
     const { result } = await response.json();
     if (core.isDebug()) {
-        core.info(`Result: '${JSON.stringify(result, null, 2)}'`);
+        core.info(`Result: '${objToString(result)}'`);
     }
 
     throwIfHasCpanelErrors(result);
@@ -63,7 +74,7 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
 async function updateCpanelBranchInfos() {
     const branch = core.getInput('branch');
 
-    const result = await makeCpanelVersionControlRequest('/execute/VersionControl/update', {
+    const result = await makeCpanelVersionControlRequest('execute/VersionControl/update', {
         'branch': branch
     });
 
@@ -75,7 +86,7 @@ async function updateCpanelBranchInfos() {
 }
 
 async function createDeployment() {
-    const { deploy_id } = await makeCpanelVersionControlRequest('/execute/VersionControlDeployment/create');
+    const { deploy_id } = await makeCpanelVersionControlRequest('execute/VersionControlDeployment/create');
 
     if (!deploy_id) {
         throw new DeploymentCreateError('The deployment has not been created in cPanel (empty deploy_id)');

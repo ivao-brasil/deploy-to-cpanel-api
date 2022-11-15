@@ -7109,64 +7109,76 @@ class DeploymentCreateError extends Error {
 /***/ ((__webpack_module__, __unused_webpack___webpack_exports__, __nccwpck_require__) => {
 
 __nccwpck_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__) => {
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
-/* harmony import */ var node_fetch__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(4429);
-/* harmony import */ var _exceptions_mjs__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(2103);
+/* harmony import */ var util__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(3837);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(2186);
+/* harmony import */ var node_fetch__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(4429);
+/* harmony import */ var _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(2103);
+
 
 
 
 
 function throwIfHasResponseError(response) {
     if (!response.ok) {
-        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_1__/* .HTTPResponseError */ .Pd(response);
+        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .HTTPResponseError */ .Pd(response);
     }
 }
 
 function throwIfHasCpanelErrors(resultJson) {
     if (!resultJson.status) {
-        throw (0,_exceptions_mjs__WEBPACK_IMPORTED_MODULE_1__/* .CPanelError */ .XQ)(resultJson.errors);
+        throw (0,_exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .CPanelError */ .XQ)(resultJson.errors);
     }
 }
 
 function setSecrets() {
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret('deploy-user');
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret('deploy-key');
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.setSecret('deploy-user');
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.setSecret('deploy-key');
+}
+
+function objToString(obj) {
+    return (0,util__WEBPACK_IMPORTED_MODULE_0__.inspect)(obj, { showHidden: false, depth: null, colors: true });
 }
 
 async function makeCpanelVersionControlRequest(endpointUrl, params) {
-    const cpanelUrl = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('cpanel-url');
-    const deployUser = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('deploy-user');
-    const deployKey = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('deploy-key');
-    const repoRoot = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('cpanel-repository-root');
+    const cpanelUrl = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('cpanel-url');
+    const deployUser = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('deploy-user');
+    const deployKey = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('deploy-key');
+    const repoRoot = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('cpanel-repository-root');
 
     const authHeader = `cpanel ${{ deployUser }}:${{ deployKey }}"`;
-    const requestParams = new URLSearchParams({
+    const requestParams = {
         'repository_root': repoRoot,
         ...params
-    });
-    const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestParams.toString()}`;
-
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
-    if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug()) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`With query string: '${requestParams.toString()}'`);
+    };
+    const requestQuery = new URLSearchParams(requestParams);
+    const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestQuery.toString()}`;
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
+    if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`With params: '${objToString(requestParams)}'`);
     }
 
-    const response = await (0,node_fetch__WEBPACK_IMPORTED_MODULE_2__/* ["default"] */ .ZP)(fetchUrl, {
-        headers: {
-            'Authorization': authHeader,
-            accept: 'application/json'
-        },
+    const headers = {
+        'Authorization': authHeader,
+        accept: 'application/json'
+    };
+
+    if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`With headers: '${objToString(headers)}'`);
+    }
+
+    const response = await (0,node_fetch__WEBPACK_IMPORTED_MODULE_3__/* ["default"] */ .ZP)(fetchUrl, {
+        headers,
     });
 
-    if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug()) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Response: '${JSON.stringify(response, null, 2)}'`);
+    if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Response: '${objToString(response)}'`);
     }
 
     throwIfHasResponseError(response);
 
     const { result } = await response.json();
-    if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug()) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Result: '${JSON.stringify(result, null, 2)}'`);
+    if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Result: '${objToString(result)}'`);
     }
 
     throwIfHasCpanelErrors(result);
@@ -7175,45 +7187,45 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
 }
 
 async function updateCpanelBranchInfos() {
-    const branch = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('branch');
+    const branch = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('branch');
 
-    const result = await makeCpanelVersionControlRequest('/execute/VersionControl/update', {
+    const result = await makeCpanelVersionControlRequest('execute/VersionControl/update', {
         'branch': branch
     });
 
     if (!result.deployable) {
-        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_1__/* .DeploymentSetupError */ .$B('The input branch is not deployable. It\'s source tree is clean?');
+        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentSetupError */ .$B('The input branch is not deployable. It\'s source tree is clean?');
     }
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Updated cPanel branch informations: ' + JSON.stringify(result, null, 2));
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Updated cPanel branch informations: ' + JSON.stringify(result, null, 2));
 }
 
 async function createDeployment() {
-    const { deploy_id } = await makeCpanelVersionControlRequest('/execute/VersionControlDeployment/create');
+    const { deploy_id } = await makeCpanelVersionControlRequest('execute/VersionControlDeployment/create');
 
     if (!deploy_id) {
-        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_1__/* .DeploymentCreateError */ .mK('The deployment has not been created in cPanel (empty deploy_id)');
+        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentCreateError */ .mK('The deployment has not been created in cPanel (empty deploy_id)');
     }
 
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Created deployment with ID: ' + deploy_id);
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Created deployment with ID: ' + deploy_id);
     return deploy_id;
 }
 
 try {
     setSecrets();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Update cPanel branch information');
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup('Update cPanel branch information');
     await updateCpanelBranchInfos();
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Creating cPanel deployment');
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.startGroup('Creating cPanel deployment');
     const deploymentId = await createDeployment();
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.endGroup();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('deployment-id', deploymentId);
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.setOutput('deployment-id', deploymentId);
 } catch (error) {
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);
+    _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed(error.message);
 }
 
 __webpack_handle_async_dependencies__();
