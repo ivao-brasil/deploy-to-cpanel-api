@@ -1,6 +1,5 @@
 import core from '@actions/core';
 import fetch from 'node-fetch';
-import EventSource from 'eventsource';
 import { CPanelError, HTTPResponseError } from './exceptions.mjs';
 import { objToString } from './utils.mjs';
 

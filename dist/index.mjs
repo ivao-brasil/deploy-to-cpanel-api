@@ -6904,14 +6904,6 @@ exports["default"] = _default;
 
 /***/ }),
 
-/***/ 8131:
-/***/ ((module) => {
-
-module.exports = eval("require")("eventsource");
-
-
-/***/ }),
-
 /***/ 9491:
 /***/ ((module) => {
 
@@ -7187,11 +7179,11 @@ try {
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Creating cPanel deployment');
-    const { deploymentId } = await createDeployment();
+    const { deploy_id } = await createDeployment();
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Waiting cPanel deployment finish');
-    await waitDeploymentCompletion(deploymentId, _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('timeout'));
+    await waitDeploymentCompletion(deploy_id, _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('timeout_ms'));
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('deployment-id', deploymentId);
@@ -9867,14 +9859,11 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 	});
 }
 
-// EXTERNAL MODULE: ./node_modules/@vercel/ncc/dist/ncc/@@notfound.js?eventsource
-var _notfoundeventsource = __nccwpck_require__(8131);
 // EXTERNAL MODULE: ./exceptions.mjs
 var exceptions = __nccwpck_require__(2103);
 // EXTERNAL MODULE: ./utils.mjs
 var utils = __nccwpck_require__(66);
 ;// CONCATENATED MODULE: ./requests.mjs
-
 
 
 

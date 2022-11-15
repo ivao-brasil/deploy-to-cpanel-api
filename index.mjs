@@ -68,11 +68,11 @@ try {
     core.endGroup();
 
     core.startGroup('Creating cPanel deployment');
-    const { deploymentId } = await createDeployment();
+    const { deploy_id } = await createDeployment();
     core.endGroup();
 
     core.startGroup('Waiting cPanel deployment finish');
-    await waitDeploymentCompletion(deploymentId, core.getInput('timeout'));
+    await waitDeploymentCompletion(deploy_id, core.getInput('timeout_ms'));
     core.endGroup();
 
     core.setOutput('deployment-id', deploymentId);
