@@ -7613,26 +7613,12 @@ class DeploymentError extends Error {
 __nccwpck_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__) => {
 /* harmony import */ var util__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(3837);
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(2186);
-/* harmony import */ var node_fetch__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(4429);
-/* harmony import */ var _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(2103);
-/* harmony import */ var eventsource__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(8883);
+/* harmony import */ var _requests_mjs__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(4191);
+/* harmony import */ var _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(2103);
 
 
 
 
-
-
-function throwIfHasResponseError(response) {
-    if (!response.ok) {
-        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .HTTPResponseError */ .Pd(response);
-    }
-}
-
-function throwIfHasCpanelErrors(resultJson) {
-    if (!resultJson.status) {
-        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .CPanelError */ .XQ(resultJson.errors);
-    }
-}
 
 function setSecrets() {
     _actions_core__WEBPACK_IMPORTED_MODULE_1__.setSecret('deploy-user');
@@ -7643,71 +7629,25 @@ function objToString(obj) {
     return (0,util__WEBPACK_IMPORTED_MODULE_0__.inspect)(obj, { showHidden: false, depth: null, colors: true });
 }
 
-async function makeCpanelVersionControlRequest(endpointUrl, params) {
-    const cpanelUrl = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('cpanel-url');
-    const deployUser = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('deploy-user');
-    const deployKey = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('deploy-key');
-    const repoRoot = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('cpanel-repository-root');
-
-    const authHeader = `cpanel ${deployUser}:${deployKey}`;
-    const requestQuery = new URLSearchParams({
-        'repository_root': repoRoot,
-        ...params
-    });
-
-    const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestQuery.toString()}`;
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
-
-    if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Repository root: ' + repoRoot);
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Additional params: ' + objToString(params));
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Auth string: ' + authHeader);
-    }
-
-    const headers = {
-        'Authorization': authHeader,
-        accept: 'application/json'
-    };
-
-    if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`With headers: '${objToString(headers)}'`);
-    }
-
-    const response = await (0,node_fetch__WEBPACK_IMPORTED_MODULE_4__/* ["default"] */ .ZP)(fetchUrl, {
-        headers,
-    });
-
-    throwIfHasResponseError(response);
-
-    const result = await response.json();
-    if (_actions_core__WEBPACK_IMPORTED_MODULE_1__.isDebug()) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Result: '${objToString(result)}'`);
-    }
-
-    throwIfHasCpanelErrors(result);
-
-    return result;
-}
-
 async function updateCpanelBranchInfos() {
     const branch = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('branch');
 
-    const result = await makeCpanelVersionControlRequest('execute/VersionControl/update', {
+    const result = await (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_2__/* .makeCpanelVersionControlRequest */ .l)('execute/VersionControl/update', {
         'branch': branch
     });
 
     if (!result.data.deployable) {
-        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentError */ .Jw('The input branch is not deployable. It\'s source tree is clean?');
+        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__/* .DeploymentError */ .Jw('The input branch is not deployable. It\'s source tree is clean?');
     }
 
     _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Updated cPanel branch informations: ' + objToString(result));
 }
 
 async function createDeployment() {
-    const { data } = await makeCpanelVersionControlRequest('execute/VersionControlDeployment/create');
+    const { data } = await (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_2__/* .makeCpanelVersionControlRequest */ .l)('execute/VersionControlDeployment/create');
 
     if (!data.deploy_id) {
-        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentError */ .Jw('The deployment has not been created in cPanel (empty deploy_id)');
+        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__/* .DeploymentError */ .Jw('The deployment has not been created in cPanel (empty deploy_id)');
     }
 
     _actions_core__WEBPACK_IMPORTED_MODULE_1__.info('Created deployment with data: ' + objToString(data));
@@ -7715,9 +7655,7 @@ async function createDeployment() {
 }
 
 async function watchDeploymentLog({ sse_url }) {
-    const cpanelUrl = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('cpanel-url');
-    const eventUrl = `${cpanelUrl}/${sse_url}`;
-    const event = new eventsource__WEBPACK_IMPORTED_MODULE_3__(eventUrl, { rejectUnauthorized: true });
+    const event = (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_2__/* .makeEventSourceRequest */ .t)(sse_url);
     _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Watching deployment sse in: ${eventUrl}`);
 
     event.addEventListener('task_processing', ({ data }) => {
@@ -7739,7 +7677,7 @@ async function watchDeploymentLog({ sse_url }) {
             _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`Event data: ${objToString(data)}`);
         }
 
-        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentError */ .Jw('cPanel deploy has failed! Check its logs to see what happened.');
+        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__/* .DeploymentError */ .Jw('cPanel deploy has failed! Check its logs to see what happened.');
     });
 }
 
@@ -8271,16 +8209,15 @@ return new B(c,{type:"multipart/form-data; boundary="+b})}
 
 /***/ }),
 
-/***/ 4429:
+/***/ 4191:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
 
 
 // EXPORTS
 __nccwpck_require__.d(__webpack_exports__, {
-  "ZP": () => (/* binding */ fetch)
+  "l": () => (/* binding */ makeCpanelVersionControlRequest),
+  "t": () => (/* binding */ makeEventSourceRequest)
 });
-
-// UNUSED EXPORTS: AbortError, Blob, FetchError, File, FormData, Headers, Request, Response, blobFrom, blobFromSync, fileFrom, fileFromSync, isRedirect
 
 ;// CONCATENATED MODULE: external "node:http"
 const external_node_http_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:http");
@@ -10429,6 +10366,96 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 			socket.removeListener('data', onData);
 		});
 	});
+}
+
+// EXTERNAL MODULE: ./node_modules/eventsource/lib/eventsource.js
+var eventsource = __nccwpck_require__(8883);
+// EXTERNAL MODULE: ./exceptions.mjs
+var exceptions = __nccwpck_require__(2103);
+;// CONCATENATED MODULE: ./requests.mjs
+
+
+
+
+function throwIfHasResponseError(response) {
+    if (!response.ok) {
+        throw new exceptions/* HTTPResponseError */.Pd(response);
+    }
+}
+
+function throwIfHasCpanelErrors(resultJson) {
+    if (!resultJson.status) {
+        throw new exceptions/* CPanelError */.XQ(resultJson.errors);
+    }
+}
+
+function getAuthenticationHeader() {
+    const deployUser = core.getInput('deploy-user');
+    const deployKey = core.getInput('deploy-key');
+    const authHeader = `cpanel ${deployUser}:${deployKey}`;
+    return authHeader;
+}
+
+async function makeCpanelVersionControlRequest(endpointUrl, params) {
+    const cpanelUrl = core.getInput('cpanel-url');
+    const repoRoot = core.getInput('cpanel-repository-root');
+
+    const requestQuery = new URLSearchParams({
+        'repository_root': repoRoot,
+        ...params
+    });
+
+    const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestQuery.toString()}`;
+    const authHeader = getAuthenticationHeader();
+    core.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
+
+    if (core.isDebug()) {
+        core.info('Repository root: ' + repoRoot);
+        core.info('Additional params: ' + objToString(params));
+        core.info('Auth string: ' + authHeader);
+    }
+
+    const headers = {
+        'Authorization': authHeader,
+        accept: 'application/json'
+    };
+
+    if (core.isDebug()) {
+        core.info(`With headers: '${objToString(headers)}'`);
+    }
+
+    const response = await fetch(fetchUrl, {
+        headers,
+    });
+
+    throwIfHasResponseError(response);
+
+    const result = await response.json();
+    if (core.isDebug()) {
+        core.info(`Result: '${objToString(result)}'`);
+    }
+
+    throwIfHasCpanelErrors(result);
+
+    return result;
+}
+
+function makeEventSourceRequest(endpointUrl) {
+    const cpanelUrl = core.getInput('cpanel-url');
+    const eventUrl = `${cpanelUrl}/${endpointUrl}`;
+    const authHeader = getAuthenticationHeader();
+
+    const event = new eventsource(eventUrl, {
+        rejectUnauthorized: true,
+        withCredentials: true,
+        headers: { 'Authorization': authHeader }
+    });
+
+    evtSource.onerror = (err) => {
+        throw new err;
+    };
+
+    return event;
 }
 
 
