@@ -7145,6 +7145,12 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
         ...params
     });
     const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestParams.toString()}`;
+
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
+    if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug()) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`With query string: '${requestParams.toString()}'`);
+    }
+
     const response = await (0,node_fetch__WEBPACK_IMPORTED_MODULE_2__/* ["default"] */ .ZP)(fetchUrl, {
         headers: {
             'Authorization': authHeader,
@@ -7152,9 +7158,17 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
         },
     });
 
+    if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug()) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Response: '${JSON.stringify(response, null, 2)}'`);
+    }
+
     throwIfHasResponseError(response);
 
     const { result } = await response.json();
+    if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug()) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Result: '${JSON.stringify(result, null, 2)}'`);
+    }
+
     throwIfHasCpanelErrors(result);
 
     return result;

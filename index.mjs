@@ -31,6 +31,12 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
         ...params
     });
     const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestParams.toString()}`;
+
+    core.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
+    if (core.isDebug()) {
+        core.info(`With query string: '${requestParams.toString()}'`);
+    }
+
     const response = await fetch(fetchUrl, {
         headers: {
             'Authorization': authHeader,
@@ -38,9 +44,17 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
         },
     });
 
+    if (core.isDebug()) {
+        core.info(`Response: '${JSON.stringify(response, null, 2)}'`);
+    }
+
     throwIfHasResponseError(response);
 
     const { result } = await response.json();
+    if (core.isDebug()) {
+        core.info(`Result: '${JSON.stringify(result, null, 2)}'`);
+    }
+
     throwIfHasCpanelErrors(result);
 
     return result;
