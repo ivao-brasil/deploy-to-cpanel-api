@@ -21,4 +21,4 @@ outputs:
     description: 'cPanel generated deployment ID'
 runs:
   using: 'node16'
-  main: 'index.mjs'
+  main: 'dist/index.mjs'
