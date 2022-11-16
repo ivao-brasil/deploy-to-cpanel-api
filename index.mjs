@@ -1,5 +1,5 @@
 import core from '@actions/core';
-import { makeCpanelVersionControlRequest, makeEventSourceRequest } from './requests.mjs';
+import { makeCpanelVersionControlRequest } from './requests.mjs';
 import { DeploymentError } from './exceptions.mjs';
 import { objToString, sleep } from './utils.mjs';
 
