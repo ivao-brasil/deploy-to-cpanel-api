@@ -7188,7 +7188,7 @@ try {
     await waitDeploymentCompletion(deploy_id, _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('timeout_ms'));
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('deployment-id', deploymentId);
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('deployment-id', deploy_id);
 } catch (error) {
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);
 }

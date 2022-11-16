@@ -77,7 +77,7 @@ try {
     await waitDeploymentCompletion(deploy_id, core.getInput('timeout_ms'));
     core.endGroup();
 
-    core.setOutput('deployment-id', deploymentId);
+    core.setOutput('deployment-id', deploy_id);
 } catch (error) {
     core.setFailed(error.message);
 }
