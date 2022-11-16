@@ -24,9 +24,11 @@ cPanel generated deployment ID
 ```yaml
 uses: ivao-brasil/deploy-to-cpanel-api@main
 with:
-    cpanel-url: "${{ secrets.CPANEL_URL }}"
-    deploy-user: "${{ secrets.DEPLOY_USER }}"
-    deploy-key: "${{ secrets.DEPLOY_KEY }}"
-    cpanel-repository-root: "${{ secrets.REPOSITORY_ROOT }}"
+    cpanel-url: "https://abc/cpsess1234"
+    deploy-user: "test"
+    deploy-key: "test"
+    cpanel-repository-root: "/home/test/deploy"
     branch: main
 ```
+
+It's advised to use Github secrets to safely provide the parameters.
