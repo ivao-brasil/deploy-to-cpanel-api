@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-npx ncc build index.mjs -o dist
+npm run build
 git add dist/*

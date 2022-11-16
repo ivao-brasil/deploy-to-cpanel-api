@@ -5,6 +5,7 @@
   "main": "index.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "ncc build -o dist",
     "prepare": "husky install"
   },
   "keywords": [],
