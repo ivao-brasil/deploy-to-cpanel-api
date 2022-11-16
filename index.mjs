@@ -4,6 +4,8 @@ import { DeploymentError } from './exceptions.mjs';
 import { objToString, sleep } from './utils.mjs';
 
 function setSecrets() {
+    core.setSecret('cpanel-url');
+    core.setSecret('cpanel-repository-root');
     core.setSecret('deploy-user');
     core.setSecret('deploy-key');
 }

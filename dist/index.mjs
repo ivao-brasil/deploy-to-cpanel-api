@@ -7115,6 +7115,8 @@ __nccwpck_require__.a(__webpack_module__, async (__webpack_handle_async_dependen
 
 
 function setSecrets() {
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret('cpanel-url');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret('cpanel-repository-root');
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret('deploy-user');
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret('deploy-key');
 }
