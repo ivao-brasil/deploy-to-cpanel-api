@@ -24,9 +24,9 @@ cPanel generated deployment ID
 ```yaml
 uses: ivao-brasil/deploy-to-cpanel-api@main
 with:
-    cpanel-url: 'https://abc/cpsesses123'
-    deploy-user: ${{ secrets.DEPLOY_USER }}
-    deploy-key: ${{ secrets.DEPLOY_KEY }}
-    cpanel-repository-root: /home/user/deploy
+    cpanel-url: "${{ secrets.CPANEL_URL }}"
+    deploy-user: "${{ secrets.DEPLOY_USER }}"
+    deploy-key: "${{ secrets.DEPLOY_KEY }}"
+    cpanel-repository-root: "${{ secrets.REPOSITORY_ROOT }}"
     branch: main
 ```
