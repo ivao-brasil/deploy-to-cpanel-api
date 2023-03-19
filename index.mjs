@@ -1,4 +1,5 @@
 import core from '@actions/core';
+import path from 'path';
 import { makeCpanelVersionControlRequest } from './requests.mjs';
 import { DeploymentError } from './exceptions.mjs';
 import { objToString, sleep } from './utils.mjs';
@@ -21,7 +22,9 @@ async function updateCpanelBranchInfos() {
         throw new DeploymentError('The input branch is not deployable. It\'s source tree is clean?');
     }
 
-    core.info('Updated cPanel branch informations: ' + objToString(result));
+    if (core.isDebug) {
+        core.debug('Updated cPanel branch informations: ' + objToString(result));
+    }
 }
 
 async function createDeployment() {
@@ -31,7 +34,9 @@ async function createDeployment() {
         throw new DeploymentError('The deployment has not been created in cPanel (empty deploy_id)');
     }
 
-    core.info('Created deployment with data: ' + objToString(data));
+    if (core.isDebug) {
+        core.debug('Created deployment with data: ' + objToString(data));
+    }
     return data;
 }
 
@@ -49,7 +54,16 @@ async function waitDeploymentCompletion(deploy_id, timeoutSeconds) {
         }
 
         if (lastDeployment.timestamps.failed) {
-            throw new DeploymentError(`The deployment has failed! Check the log file at ${lastDeployment.log_path}`);
+            try {
+                core.group('Error Log', async () => {
+                    const logFileContent = await getLogFileContent(lastDeployment.log_path);
+                    core.error(logFileContent);
+                });
+                throw new DeploymentError('Deployment Error!');
+            } catch {
+                throw new DeploymentError(`The deployment has failed! Check the log file at ${lastDeployment.log_path}`);
+            }
+
         }
 
         if (lastDeployment.timestamps.succeeded) {
@@ -62,10 +76,23 @@ async function waitDeploymentCompletion(deploy_id, timeoutSeconds) {
     throw new DeploymentError(`The cPanel doesn't returned any data after ${timeoutSeconds} seconds`);
 }
 
+async function getLogFileContent(logPath) {
+    const dirName = path.dirname(logPath);
+    const fileName = path.basename(logPath);
+    core.info('Retrieving log content from: ' + fileName);
+
+    const result = await makeCpanelVersionControlRequest('execute/Fileman/get_file_content', {
+        dir: dirName,
+        file: fileName
+    });
+
+    return result.data?.content;
+}
+
 try {
     setSecrets();
 
-    core.startGroup('Update cPanel branch information');
+    core.startGroup('Updating cPanel branch information');
     await updateCpanelBranchInfos();
     core.endGroup();
 
@@ -73,7 +100,7 @@ try {
     const { deploy_id } = await createDeployment();
     core.endGroup();
 
-    core.startGroup('Waiting cPanel deployment finish');
+    core.startGroup('Waiting cPanel deployment finish...');
     await waitDeploymentCompletion(deploy_id, core.getInput('timeout_ms'));
     core.endGroup();
 

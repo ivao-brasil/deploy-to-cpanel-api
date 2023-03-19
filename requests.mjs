@@ -20,7 +20,7 @@ function getAuthenticationHeader() {
     const deployKey = core.getInput('deploy-key');
     const authHeader = `cpanel ${deployUser}:${deployKey}`;
     if (core.isDebug()) {
-        core.info('Generated auth header: ' + authHeader);
+        core.debug('Generated auth header: ' + authHeader);
     }
 
     return authHeader;
@@ -36,11 +36,11 @@ export async function makeCpanelVersionControlRequest(endpointUrl, params) {
     });
 
     const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestQuery.toString()}`;
-    core.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
 
     if (core.isDebug()) {
-        core.info('Repository root: ' + repoRoot);
-        core.info('Additional params: ' + objToString(params));
+        core.debug(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
+        core.debug('Repository root: ' + repoRoot);
+        core.debug('Additional params: ' + objToString(params));
     }
 
     const headers = {
@@ -49,7 +49,7 @@ export async function makeCpanelVersionControlRequest(endpointUrl, params) {
     };
 
     if (core.isDebug()) {
-        core.info(`With headers: '${objToString(headers)}'`);
+        core.debug(`With headers: '${objToString(headers)}'`);
     }
 
     const response = await fetch(fetchUrl, {
@@ -60,7 +60,7 @@ export async function makeCpanelVersionControlRequest(endpointUrl, params) {
 
     const result = await response.json();
     if (core.isDebug()) {
-        core.info(`Result: '${objToString(result)}'`);
+        core.debug(`Result: '${objToString(result)}'`);
     }
 
     throwIfHasCpanelErrors(result);
