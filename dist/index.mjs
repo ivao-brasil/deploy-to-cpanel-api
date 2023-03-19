@@ -7171,8 +7171,14 @@ async function waitDeploymentCompletion(deploy_id, timeoutSeconds) {
                     const logFileContent = await getLogFileContent(lastDeployment.log_path);
                     _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(logFileContent);
                 });
+
                 throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__/* .DeploymentError */ .Jw('Deployment Error!');
-            } catch {
+            } catch (e) {
+                // If there already has a DeploymentError, re throw it
+                if (e instanceof _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__/* .DeploymentError */ .Jw) {
+                    throw e;
+                }
+
                 throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__/* .DeploymentError */ .Jw(`The deployment has failed! Check the log file at ${lastDeployment.log_path}`);
             }
 
@@ -7204,17 +7210,14 @@ async function getLogFileContent(logPath) {
 try {
     setSecrets();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Updating cPanel branch information');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Updating cPanel branch information');
     await updateCpanelBranchInfos();
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Creating cPanel deployment');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Creating cPanel deployment');
     const { deploy_id } = await createDeployment();
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Waiting cPanel deployment finish...');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Waiting cPanel deployment finish...');
     await waitDeploymentCompletion(deploy_id, _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('timeout_ms'));
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('deployment-id', deploy_id);
 } catch (error) {
