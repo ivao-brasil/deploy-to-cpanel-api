@@ -7106,9 +7106,11 @@ class DeploymentError extends Error {
 
 __nccwpck_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__) => {
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
-/* harmony import */ var _requests_mjs__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(4191);
-/* harmony import */ var _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(2103);
-/* harmony import */ var _utils_mjs__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(66);
+/* harmony import */ var path__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(1017);
+/* harmony import */ var _requests_mjs__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(4191);
+/* harmony import */ var _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(2103);
+/* harmony import */ var _utils_mjs__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(66);
+
 
 
 
@@ -7124,25 +7126,29 @@ function setSecrets() {
 async function updateCpanelBranchInfos() {
     const branch = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('branch');
 
-    const result = await (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_1__/* .makeCpanelVersionControlRequest */ .l)('execute/VersionControl/update', {
+    const result = await (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_2__/* .makeCpanelVersionControlRequest */ .l)('execute/VersionControl/update', {
         'branch': branch
     });
 
     if (!result.data.deployable) {
-        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentError */ .Jw('The input branch is not deployable. It\'s source tree is clean?');
+        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__/* .DeploymentError */ .Jw('The input branch is not deployable. It\'s source tree is clean?');
     }
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Updated cPanel branch informations: ' + (0,_utils_mjs__WEBPACK_IMPORTED_MODULE_3__/* .objToString */ .M)(result));
+    if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug('Updated cPanel branch informations: ' + (0,_utils_mjs__WEBPACK_IMPORTED_MODULE_4__/* .objToString */ .M)(result));
+    }
 }
 
 async function createDeployment() {
-    const { data } = await (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_1__/* .makeCpanelVersionControlRequest */ .l)('execute/VersionControlDeployment/create');
+    const { data } = await (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_2__/* .makeCpanelVersionControlRequest */ .l)('execute/VersionControlDeployment/create');
 
     if (!data.deploy_id) {
-        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentError */ .Jw('The deployment has not been created in cPanel (empty deploy_id)');
+        throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__/* .DeploymentError */ .Jw('The deployment has not been created in cPanel (empty deploy_id)');
     }
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Created deployment with data: ' + (0,_utils_mjs__WEBPACK_IMPORTED_MODULE_3__/* .objToString */ .M)(data));
+    if (_actions_core__WEBPACK_IMPORTED_MODULE_0__.isDebug) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug('Created deployment with data: ' + (0,_utils_mjs__WEBPACK_IMPORTED_MODULE_4__/* .objToString */ .M)(data));
+    }
     return data;
 }
 
@@ -7153,30 +7159,52 @@ async function waitDeploymentCompletion(deploy_id, timeoutSeconds) {
     while (remaningTime > 0) {
         remaningTime -= POOLING_RATE_MS;
 
-        const { data } = await (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_1__/* .makeCpanelVersionControlRequest */ .l)('execute/VersionControlDeployment/retrieve');
+        const { data } = await (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_2__/* .makeCpanelVersionControlRequest */ .l)('execute/VersionControlDeployment/retrieve');
         const lastDeployment = data.find((item) => item.deploy_id === deploy_id);
         if (!lastDeployment) {
             return;
         }
 
         if (lastDeployment.timestamps.failed) {
-            throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentError */ .Jw(`The deployment has failed! Check the log file at ${lastDeployment.log_path}`);
+            try {
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.group('Error Log', async () => {
+                    const logFileContent = await getLogFileContent(lastDeployment.log_path);
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.error(logFileContent);
+                });
+                throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__/* .DeploymentError */ .Jw('Deployment Error!');
+            } catch {
+                throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__/* .DeploymentError */ .Jw(`The deployment has failed! Check the log file at ${lastDeployment.log_path}`);
+            }
+
         }
 
         if (lastDeployment.timestamps.succeeded) {
             return;
         }
 
-        await (0,_utils_mjs__WEBPACK_IMPORTED_MODULE_3__/* .sleep */ ._)(POOLING_RATE_MS);
+        await (0,_utils_mjs__WEBPACK_IMPORTED_MODULE_4__/* .sleep */ ._)(POOLING_RATE_MS);
     };
 
-    throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_2__/* .DeploymentError */ .Jw(`The cPanel doesn't returned any data after ${timeoutSeconds} seconds`);
+    throw new _exceptions_mjs__WEBPACK_IMPORTED_MODULE_3__/* .DeploymentError */ .Jw(`The cPanel doesn't returned any data after ${timeoutSeconds} seconds`);
+}
+
+async function getLogFileContent(logPath) {
+    const dirName = path__WEBPACK_IMPORTED_MODULE_1__.dirname(logPath);
+    const fileName = path__WEBPACK_IMPORTED_MODULE_1__.basename(logPath);
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Retrieving log content from: ' + fileName);
+
+    const result = await (0,_requests_mjs__WEBPACK_IMPORTED_MODULE_2__/* .makeCpanelVersionControlRequest */ .l)('execute/Fileman/get_file_content', {
+        dir: dirName,
+        file: fileName
+    });
+
+    return result.data?.content;
 }
 
 try {
     setSecrets();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Update cPanel branch information');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Updating cPanel branch information');
     await updateCpanelBranchInfos();
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
@@ -7184,7 +7212,7 @@ try {
     const { deploy_id } = await createDeployment();
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Waiting cPanel deployment finish');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup('Waiting cPanel deployment finish...');
     await waitDeploymentCompletion(deploy_id, _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('timeout_ms'));
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 
@@ -9888,7 +9916,7 @@ function getAuthenticationHeader() {
     const deployKey = core.getInput('deploy-key');
     const authHeader = `cpanel ${deployUser}:${deployKey}`;
     if (core.isDebug()) {
-        core.info('Generated auth header: ' + authHeader);
+        core.debug('Generated auth header: ' + authHeader);
     }
 
     return authHeader;
@@ -9904,11 +9932,11 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
     });
 
     const fetchUrl = `${cpanelUrl}/${endpointUrl}?${requestQuery.toString()}`;
-    core.info(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
 
     if (core.isDebug()) {
-        core.info('Repository root: ' + repoRoot);
-        core.info('Additional params: ' + (0,utils/* objToString */.M)(params));
+        core.debug(`Sending request to: '${cpanelUrl}/${endpointUrl}'`);
+        core.debug('Repository root: ' + repoRoot);
+        core.debug('Additional params: ' + (0,utils/* objToString */.M)(params));
     }
 
     const headers = {
@@ -9917,7 +9945,7 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
     };
 
     if (core.isDebug()) {
-        core.info(`With headers: '${(0,utils/* objToString */.M)(headers)}'`);
+        core.debug(`With headers: '${(0,utils/* objToString */.M)(headers)}'`);
     }
 
     const response = await fetch(fetchUrl, {
@@ -9928,7 +9956,7 @@ async function makeCpanelVersionControlRequest(endpointUrl, params) {
 
     const result = await response.json();
     if (core.isDebug()) {
-        core.info(`Result: '${(0,utils/* objToString */.M)(result)}'`);
+        core.debug(`Result: '${(0,utils/* objToString */.M)(result)}'`);
     }
 
     throwIfHasCpanelErrors(result);

@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "ncc build -o dist",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "postinstall": "npm run prepare"
   },
   "keywords": [],
   "author": "",
