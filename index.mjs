@@ -59,8 +59,14 @@ async function waitDeploymentCompletion(deploy_id, timeoutSeconds) {
                     const logFileContent = await getLogFileContent(lastDeployment.log_path);
                     core.error(logFileContent);
                 });
+
                 throw new DeploymentError('Deployment Error!');
-            } catch {
+            } catch (e) {
+                // If there already has a DeploymentError, re throw it
+                if (e instanceof DeploymentError) {
+                    throw e;
+                }
+
                 throw new DeploymentError(`The deployment has failed! Check the log file at ${lastDeployment.log_path}`);
             }
 
@@ -92,17 +98,14 @@ async function getLogFileContent(logPath) {
 try {
     setSecrets();
 
-    core.startGroup('Updating cPanel branch information');
+    core.info('Updating cPanel branch information');
     await updateCpanelBranchInfos();
-    core.endGroup();
 
-    core.startGroup('Creating cPanel deployment');
+    core.info('Creating cPanel deployment');
     const { deploy_id } = await createDeployment();
-    core.endGroup();
 
-    core.startGroup('Waiting cPanel deployment finish...');
+    core.info('Waiting cPanel deployment finish...');
     await waitDeploymentCompletion(deploy_id, core.getInput('timeout_ms'));
-    core.endGroup();
 
     core.setOutput('deployment-id', deploy_id);
 } catch (error) {
